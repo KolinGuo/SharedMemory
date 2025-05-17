@@ -46,8 +46,9 @@ HISTORY:
 
 # sys.path.insert(0, "../")
 
-from SharedMemory.SharedMemory import SharedMemory
 import unittest
+
+from SharedMemory.SharedMemory import SharedMemory
 
 
 class TestSharedMemoryServer(unittest.TestCase):
@@ -97,7 +98,9 @@ class TestSharedMemoryServer(unittest.TestCase):
             res2 = c[0] == "ytreza"
             c.close()
             s.close()
-            self.assertTrue("test4" not in SharedMemory.getSharedMemorySpace() and res1 and res2)
+            self.assertTrue(
+                "test4" not in SharedMemory.getSharedMemorySpace() and res1 and res2
+            )
         except:
             self.assertTrue(False)
 
@@ -157,7 +160,9 @@ class TestSharedMemoryServer(unittest.TestCase):
             res2 = s.getAvailability() == True
             s.close()
             c.close()
-            self.assertTrue("test8" not in SharedMemory.getSharedMemorySpace() and res1 and res2)
+            self.assertTrue(
+                "test8" not in SharedMemory.getSharedMemorySpace() and res1 and res2
+            )
         except:
             self.assertTrue(False)
 

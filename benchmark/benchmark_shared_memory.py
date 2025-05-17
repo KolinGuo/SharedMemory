@@ -12,10 +12,9 @@ from typing import Union
 import numpy as np
 import scipy
 from prettytable import PrettyTable
+from real_robot.utils.multiprocessing import SharedObject
 from sapien import Pose
 from transforms3d.euler import euler2quat
-
-from real_robot.utils.multiprocessing import SharedObject
 
 
 def create_random_ndarray(

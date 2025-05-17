@@ -68,7 +68,9 @@ class SMSizeError(Exception):
 
     """
 
-    def __init__(self, message: str = "size of new value exceeds the previous one.") -> None:
+    def __init__(
+        self, message: str = "size of new value exceeds the previous one."
+    ) -> None:
         """CLass constructor.
 
         Args:
@@ -139,7 +141,11 @@ class SMManagerName(Exception):
 
         """
         if message is None:
-            self.message = "shared memory called '" + name + "' is defined as the shared memory manager."
+            self.message = (
+                "shared memory called '"
+                + name
+                + "' is defined as the shared memory manager."
+            )
         else:
             self.message = message
 
@@ -210,6 +216,12 @@ class SMNameLength(Exception):
             message (str, optional): message. Defaults to None.
 
         """
-        self.message = "Your shared memory name: '" + name + "' have a length of " + str(message) + ". It shouldn't exceed 9 characters."
+        self.message = (
+            "Your shared memory name: '"
+            + name
+            + "' have a length of "
+            + str(message)
+            + ". It shouldn't exceed 9 characters."
+        )
 
         super().__init__(self.message)

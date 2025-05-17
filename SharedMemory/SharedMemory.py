@@ -53,16 +53,26 @@ HISTORY:
 2024-11-07	Zen	Optimizing code for memory allocation
 """  # noqa
 
-from re import S
-from .SMError import SMMultiInputError, SMTypeError, SMSizeError, SMManagerName, SMAlreadyExist, SMEncoding, SMNameLength
-import posix_ipc
-import logging
-import struct
-import numpy
 import json
+import logging
 import mmap
-import sys
 import os
+import struct
+import sys
+from re import S
+
+import numpy
+import posix_ipc
+
+from .SMError import (
+    SMAlreadyExist,
+    SMEncoding,
+    SMManagerName,
+    SMMultiInputError,
+    SMNameLength,
+    SMSizeError,
+    SMTypeError,
+)
 
 _SHM_NAME_PREFIX = "/psm_"
 _SEM_NAME_PREFIX = "/sem_"
@@ -94,7 +104,16 @@ class SharedMemory:
 
     MAN = False
 
-    def __init__(self, name: str, value: any = None, path: str = None, size: int = None, client: bool = False, log: str = None, silent: bool = False) -> None:
+    def __init__(
+        self,
+        name: str,
+        value: any = None,
+        path: str = None,
+        size: int = None,
+        client: bool = False,
+        log: str = None,
+        silent: bool = False,
+    ) -> None:
         """Class constructor.
 
         Args:
@@ -115,21 +134,40 @@ class SharedMemory:
         self.__silent = silent
 
         if self.__log is not None:
-            logging.basicConfig(filename=self.__log, format="%(asctime)s - " + _SHM_NAME_PREFIX[1:] + name + " - %(levelname)s - %(message)s")
+            logging.basicConfig(
+                filename=self.__log,
+                format="%(asctime)s - "
+                + _SHM_NAME_PREFIX[1:]
+                + name
+                + " - %(levelname)s - %(message)s",
+            )
 
             f = open(os.devnull, "w")
             sys.stdout = f
 
         if name == _MAN_NAME and sys.platform == "darwin" and not SharedMemory.MAN:
             if self.__log is not None:
-                self.__writeLog(1, "shared memory called '" + _MAN_NAME + "' is defined as the shared memory manager.")
+                self.__writeLog(
+                    1,
+                    "shared memory called '"
+                    + _MAN_NAME
+                    + "' is defined as the shared memory manager.",
+                )
             elif not self.__silent:
-                print("ERROR: shared memory called '" + _MAN_NAME + "' is defined as the shared memory manager.")
+                print(
+                    "ERROR: shared memory called '"
+                    + _MAN_NAME
+                    + "' is defined as the shared memory manager."
+                )
 
             raise SMManagerName(_MAN_NAME)
-        if client and (value is None and path is None or value is not None and path is not None):
+        if client and (
+            value is None and path is None or value is not None and path is not None
+        ):
             if self.__log is not None:
-                self.__writeLog(1, "Conflict between value and json path intialization.")
+                self.__writeLog(
+                    1, "Conflict between value and json path intialization."
+                )
             elif not self.__silent:
                 print("ERROR: Conflict between value and json path intialization.")
 
@@ -138,7 +176,9 @@ class SharedMemory:
             self.__value = self.__initValueByJSON(path)
         elif not client and (value is not None or path is not None):
             if self.__log is not None:
-                self.__writeLog(1, "Conflict between value and json path intialization.")
+                self.__writeLog(
+                    1, "Conflict between value and json path intialization."
+                )
             elif not self.__silent:
                 print("ERROR: Conflict between value and json path intialization.")
 
@@ -153,7 +193,9 @@ class SharedMemory:
         self.__client = client
 
         if len(self.__name_memory) > _MAX_LEN:
-            raise SMNameLength(_MAN_NAME, len(self.__name_memory) - len(_SHM_NAME_PREFIX))
+            raise SMNameLength(
+                _MAN_NAME, len(self.__name_memory) - len(_SHM_NAME_PREFIX)
+            )
 
         self.__initSharedMemory()
 
@@ -289,12 +331,19 @@ class SharedMemory:
         try:
             self.__mapfile.seek(0)
             _packed = self.__mapfile.read()
-            _shift = int.from_bytes(_packed[2:10], "big") + 11 if _packed[1].to_bytes(1, byteorder="big") in [_NPARRAY, _LIST, _TUPLE, _DICT] else _packed[2] + 4
+            _shift = (
+                int.from_bytes(_packed[2:10], "big") + 11
+                if _packed[1].to_bytes(1, byteorder="big")
+                in [_NPARRAY, _LIST, _TUPLE, _DICT]
+                else _packed[2] + 4
+            )
             _encoded_data = _packed[0:_shift]
         except:
             return None
 
-        if (b := _encoded_data[0].to_bytes(1, byteorder="big") != _BEGIN) or _encoded_data[-1].to_bytes(1, byteorder="big") != _END:
+        if (
+            b := _encoded_data[0].to_bytes(1, byteorder="big") != _BEGIN
+        ) or _encoded_data[-1].to_bytes(1, byteorder="big") != _END:
             if not mutex:
                 self.__semaphore.release()
 
@@ -381,8 +430,12 @@ class SharedMemory:
                 except posix_ipc.ExistentialError:
                     pass
 
-                self.__memory = posix_ipc.SharedMemory(self.__name_memory, flags=_FLAG, mode=_MODE, size=self.__size)
-                self.__semaphore = posix_ipc.Semaphore(self.__name_semaphore, _FLAG, _MODE, initial_value=1)
+                self.__memory = posix_ipc.SharedMemory(
+                    self.__name_memory, flags=_FLAG, mode=_MODE, size=self.__size
+                )
+                self.__semaphore = posix_ipc.Semaphore(
+                    self.__name_semaphore, _FLAG, _MODE, initial_value=1
+                )
 
                 # os.ftruncate(self.__memory.fd, self.__size)
             except posix_ipc.ExistentialError:
@@ -392,7 +445,9 @@ class SharedMemory:
                     try:
                         self.__semaphore = posix_ipc.Semaphore(self.__name_semaphore)
                     except posix_ipc.ExistentialError:
-                        self.__semaphore = posix_ipc.Semaphore(self.__name_semaphore, _FLAG, _MODE, initial_value=1)
+                        self.__semaphore = posix_ipc.Semaphore(
+                            self.__name_semaphore, _FLAG, _MODE, initial_value=1
+                        )
                 else:
                     self.close()
                     raise SMAlreadyExist(self.__name_memory)
@@ -450,12 +505,22 @@ class SharedMemory:
         elif type(value) == float:
             _encoded_float = struct.pack(">d", value)
 
-            _data += _FLOAT + len(_encoded_float).to_bytes(1, byteorder="big") + _encoded_float
+            _data += (
+                _FLOAT
+                + len(_encoded_float).to_bytes(1, byteorder="big")
+                + _encoded_float
+            )
 
         if type(value) == complex:
-            _encoded_cplx = self.__encoding(value.real)[1:-1] + self.__encoding(value.imag)[1:-1]
+            _encoded_cplx = (
+                self.__encoding(value.real)[1:-1] + self.__encoding(value.imag)[1:-1]
+            )
 
-            _data += _COMPLEX + len(_encoded_cplx).to_bytes(1, byteorder="big") + _encoded_cplx
+            _data += (
+                _COMPLEX
+                + len(_encoded_cplx).to_bytes(1, byteorder="big")
+                + _encoded_cplx
+            )
 
         elif type(value) == bool:
             _data += _BOOL + b"\x01" + int(value).to_bytes(1, byteorder="big")
@@ -463,7 +528,9 @@ class SharedMemory:
         elif type(value) == str:
             _str_encoded = value.encode("utf-8")
 
-            _data += _STR + len(_str_encoded).to_bytes(1, byteorder="big") + _str_encoded
+            _data += (
+                _STR + len(_str_encoded).to_bytes(1, byteorder="big") + _str_encoded
+            )
 
         elif type(value) == list or type(value) == tuple:
             _lt_encoded = b""
@@ -471,13 +538,22 @@ class SharedMemory:
             for e in value:
                 _lt_encoded += self.__encoding(e)
 
-            _data += (_LIST if type(value) == list else _TUPLE) + len(_lt_encoded).to_bytes(8, byteorder="big") + _lt_encoded
+            _data += (
+                (_LIST if type(value) == list else _TUPLE)
+                + len(_lt_encoded).to_bytes(8, byteorder="big")
+                + _lt_encoded
+            )
 
         elif type(value) == dict:
             if list(value.keys())[0] == "_LIST":
                 return self.__encoding([0] * value[list(value.keys())[0]])
             elif list(value.keys())[0] == "_NPARRAY":
-                return self.__encoding(numpy.zeros(value[list(value.keys())[0]][0], dtype=value[list(value.keys())[0]][1]))
+                return self.__encoding(
+                    numpy.zeros(
+                        value[list(value.keys())[0]][0],
+                        dtype=value[list(value.keys())[0]][1],
+                    )
+                )
             else:
                 _dict_encoded = b""
 
@@ -485,14 +561,26 @@ class SharedMemory:
                     _dict_encoded += self.__encoding(k)
                     _dict_encoded += self.__encoding(value[k])
 
-                _data += _DICT + len(_dict_encoded).to_bytes(8, byteorder="big") + _dict_encoded
+                _data += (
+                    _DICT
+                    + len(_dict_encoded).to_bytes(8, byteorder="big")
+                    + _dict_encoded
+                )
 
         elif type(value) == numpy.ndarray:
             _encoded_shape = self.__encoding(value.shape)
             _encoded_dtype = self.__encoding(value.dtype.name)
-            _encoded_np = len(_encoded_shape).to_bytes(8, byteorder="big") + len(_encoded_dtype).to_bytes(1, byteorder="big") + value.tobytes() + _encoded_shape + _encoded_dtype
+            _encoded_np = (
+                len(_encoded_shape).to_bytes(8, byteorder="big")
+                + len(_encoded_dtype).to_bytes(1, byteorder="big")
+                + value.tobytes()
+                + _encoded_shape
+                + _encoded_dtype
+            )
 
-            _data += _NPARRAY + len(_encoded_np).to_bytes(8, byteorder="big") + _encoded_np
+            _data += (
+                _NPARRAY + len(_encoded_np).to_bytes(8, byteorder="big") + _encoded_np
+            )
 
         _data += _END
 
@@ -512,7 +600,12 @@ class SharedMemory:
             _d_data = struct.unpack(">d", value[2 : value[1] + 2])[0]
 
         elif value[0].to_bytes(1, "big") == _COMPLEX:
-            _d_data = complex(self.__decoding(value[2 : value[3] + 4]), self.__decoding(value[value[3] + 4 : value[3] + 4 + value[value[3] + 6]]))
+            _d_data = complex(
+                self.__decoding(value[2 : value[3] + 4]),
+                self.__decoding(
+                    value[value[3] + 4 : value[3] + 4 + value[value[3] + 6]]
+                ),
+            )
 
         elif value[0].to_bytes(1, "big") == _BOOL:
             _d_data = bool(value[2])
@@ -520,7 +613,10 @@ class SharedMemory:
         elif value[0].to_bytes(1, "big") == _STR:
             _d_data = value[2 : value[1] + 2].decode("utf-8")
 
-        elif value[0].to_bytes(1, "big") == _LIST or value[0].to_bytes(1, "big") == _TUPLE:
+        elif (
+            value[0].to_bytes(1, "big") == _LIST
+            or value[0].to_bytes(1, "big") == _TUPLE
+        ):
             c_type = value[0]
             _d_data = []
 
@@ -528,7 +624,12 @@ class SharedMemory:
                 value = value[9:]
 
                 while len(value) != 0:
-                    _shift = int.from_bytes(value[2:10], "big") + 10 if value[1].to_bytes(1, "big") in [_NPARRAY, _LIST, _TUPLE, _DICT] else value[2] + 3
+                    _shift = (
+                        int.from_bytes(value[2:10], "big") + 10
+                        if value[1].to_bytes(1, "big")
+                        in [_NPARRAY, _LIST, _TUPLE, _DICT]
+                        else value[2] + 3
+                    )
                     new_data = value[1:_shift]
                     value = value[_shift + 1 :]
                     _d_data.append(self.__decoding(new_data))
@@ -544,7 +645,11 @@ class SharedMemory:
             while len(value) != 0:
                 new_key = self.__decoding(value[1 : value[2] + 3])
                 value = value[value[2] + 4 :]
-                _shift = int.from_bytes(value[2:10], "big") + 10 if value[1].to_bytes(1, "big") in [_NPARRAY, _LIST, _TUPLE, _DICT] else value[2] + 3
+                _shift = (
+                    int.from_bytes(value[2:10], "big") + 10
+                    if value[1].to_bytes(1, "big") in [_NPARRAY, _LIST, _TUPLE, _DICT]
+                    else value[2] + 3
+                )
                 new_data = self.__decoding(value[1:_shift])
                 _d_data[new_key] = new_data
                 value = value[_shift + 1 :]
@@ -556,7 +661,9 @@ class SharedMemory:
             _shape = value[9 + _size_data - _size_shape - value[17] : -value[17]]
             _type = value[9 + _size_data - value[17] :]
 
-            _d_data = numpy.frombuffer(_data, dtype=self.__decoding(_type[1:-1])).reshape(self.__decoding(_shape[1:-1]))
+            _d_data = numpy.frombuffer(
+                _data, dtype=self.__decoding(_type[1:-1])
+            ).reshape(self.__decoding(_shape[1:-1]))
 
         return _d_data
 
@@ -750,7 +857,16 @@ class SharedMemory:
             str: printable value of Client Class instance
 
         """
-        _s = "Client: " + str(self.__name_memory) + "\n" + "\tAvailable: " + self.getAvailability().__repr__() + "\n" + "\tValue: " + self.getValue().__repr__()
+        _s = (
+            "Client: "
+            + str(self.__name_memory)
+            + "\n"
+            + "\tAvailable: "
+            + self.getAvailability().__repr__()
+            + "\n"
+            + "\tValue: "
+            + self.getValue().__repr__()
+        )
 
         return _s
 
@@ -801,7 +917,9 @@ class SharedMemory:
 
             if not man.getAvailability():
                 man.close()
-                man = SharedMemory(_MAN_NAME, value=["man"], size=1024 * 10, client=True)
+                man = SharedMemory(
+                    _MAN_NAME, value=["man"], size=1024 * 10, client=True
+                )
 
             l = man.getValue()
             SharedMemory.MAN = False

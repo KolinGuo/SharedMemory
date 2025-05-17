@@ -48,9 +48,11 @@ HISTORY:
 
 # sys.path.insert(0, "../")
 
-from SharedMemory.SharedMemory import SharedMemory
-import numpy as np
 import unittest
+
+import numpy as np
+
+from SharedMemory.SharedMemory import SharedMemory
 
 
 class TestSharedMemoryClient(unittest.TestCase):
@@ -112,7 +114,12 @@ class TestSharedMemoryClient(unittest.TestCase):
     def test_dict(self) -> None:
         """Test client creation containing a dictionary."""
         try:
-            c = SharedMemory("test5", {"a": 1, "b": np.zeros((64, 38, 3), dtype=np.uint8)}, client=True, silent=True)
+            c = SharedMemory(
+                "test5",
+                {"a": 1, "b": np.zeros((64, 38, 3), dtype=np.uint8)},
+                client=True,
+                silent=True,
+            )
             res1 = type(c.getValue()) is dict
             res2 = c.getType() is dict
             res3 = c.getValue()["a"] == 1
@@ -129,7 +136,9 @@ class TestSharedMemoryClient(unittest.TestCase):
         """Test client creation containing a list."""
         try:
             np_test = np.zeros((1, 2, 3), dtype=np.uint8)
-            c = SharedMemory("test6", [0, 1, np_test], size=1024, client=True, silent=True)
+            c = SharedMemory(
+                "test6", [0, 1, np_test], size=1024, client=True, silent=True
+            )
             res1 = type(c.getValue()) is list
             res2 = c.getType() is list
             res3 = c.getValue()[0] == 0
@@ -140,7 +149,9 @@ class TestSharedMemoryClient(unittest.TestCase):
             res8 = c.getValue()[2].shape == np_test.shape
             c.close()
             self.assertTrue("test6" not in SharedMemory.getSharedMemorySpace())
-            self.assertTrue(res1 and res2 and res3 and res4 and res5 and res6 and res7 and res8)
+            self.assertTrue(
+                res1 and res2 and res3 and res4 and res5 and res6 and res7 and res8
+            )
         except:
             self.assertTrue(False)
 
@@ -148,7 +159,9 @@ class TestSharedMemoryClient(unittest.TestCase):
         """Test client creation containing a tuple."""
         try:
             np_test = np.zeros((1, 2, 3), dtype=np.uint8)
-            c = SharedMemory("test6", (0, 1, np_test), size=1024, client=True, silent=True)
+            c = SharedMemory(
+                "test6", (0, 1, np_test), size=1024, client=True, silent=True
+            )
 
             res1 = type(c.getValue()) is tuple
             res2 = c.getType() is tuple
@@ -181,11 +194,22 @@ class TestSharedMemoryClient(unittest.TestCase):
     def test_file(self) -> None:
         """Test client creation from a JSON file."""
         try:
-            c = SharedMemory(name="test8", path="tests/test.json", size=1024, client=True, silent=True)
+            c = SharedMemory(
+                name="test8",
+                path="tests/test.json",
+                size=1024,
+                client=True,
+                silent=True,
+            )
             res1 = type(c.getValue()) is dict
-            res2 = not (False in (c.getValue()["test2"][1] == np.zeros((4, 4, 2), dtype=np.uint8)))
+            res2 = not (
+                False
+                in (c.getValue()["test2"][1] == np.zeros((4, 4, 2), dtype=np.uint8))
+            )
             c.close()
-            self.assertTrue("test8" not in SharedMemory.getSharedMemorySpace() and res1 and res2)
+            self.assertTrue(
+                "test8" not in SharedMemory.getSharedMemorySpace() and res1 and res2
+            )
         except:
             self.assertTrue(False)
 
@@ -197,7 +221,9 @@ class TestSharedMemoryClient(unittest.TestCase):
             res1 = c.getValue() == 12
             res2 = c[0] == 12
             c.close()
-            self.assertTrue("test9" not in SharedMemory.getSharedMemorySpace() and res1 and res2)
+            self.assertTrue(
+                "test9" not in SharedMemory.getSharedMemorySpace() and res1 and res2
+            )
         except:
             self.assertTrue(False)
 
@@ -233,7 +259,13 @@ class TestSharedMemoryClient(unittest.TestCase):
     def test_valueAccess(self) -> None:
         """Test __delitem__ method."""
         try:
-            c = SharedMemory("test13", {"0": 0, "1": 1, "2": 2, "3": 3}, size=1024, client=True, silent=True)
+            c = SharedMemory(
+                "test13",
+                {"0": 0, "1": 1, "2": 2, "3": 3},
+                size=1024,
+                client=True,
+                silent=True,
+            )
             c.restart()
             del c["0"]
             c.close()

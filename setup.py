@@ -36,7 +36,7 @@ HISTORY:
 2023-07-14	Zen	updating required lib
 """  # noqa
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="SharedMemory",
